@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#030912">
+<meta name="description" content="Lightweight JARVIS command center PWA for Android and desktop browsers">
+<meta http-equiv="Permissions-Policy" content="camera=(), geolocation=(), microphone=(self)">
+<title>XC-09 | JARVIS Command Center</title>
+<style>
+:root{
+  --bg:#030912;
+  --panel:#071522;
+  --panel2:#0a1b2b;
+  --line:#12364d;
+  --cyan:#19d9ff;
+  --cyan2:#65efff;
+  --green:#28e89a;
+  --yellow:#ffd35a;
+  --red:#ff5b70;
+  --text:#dcecf5;
+  --muted:#7590a2;
+  --shadow:0 0 28px rgba(25,217,255,.10);
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+button,input{font:inherit}
+button{color:inherit}
+.app{height:100dvh;display:grid;grid-template-columns:180px 1fr;grid-template-rows:58px 1fr 48px;
+background:
+radial-gradient(circle at 50% 30%,rgba(10,75,110,.17),transparent 34%),
+linear-gradient(135deg,#02070d,#06111d 55%,#030910);
+position:relative}
+.app:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.13;
+background-image:linear-gradient(rgba(35,157,202,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(35,157,202,.12) 1px,transparent 1px);
+background-size:38px 38px;mask-image:linear-gradient(to bottom,transparent,#000 20%,#000 80%,transparent)}
+.sidebar{grid-row:1/4;border-right:1px solid var(--line);background:rgba(3,12,21,.93);padding:12px 10px;z-index:3}
+.brand{height:52px;display:flex;align-items:center;gap:10px;padding:6px 8px;margin-bottom:10px}
+.brand-core{width:30px;height:30px;border:1px solid var(--cyan);border-radius:50%;display:grid;place-items:center;
+box-shadow:0 0 16px rgba(25,217,255,.35);font-size:12px}
+.brand b{font-size:17px;letter-spacing:4px}
+.brand small{display:block;color:var(--muted);font-size:7px;letter-spacing:2px;margin-top:2px}
+.nav{display:flex;flex-direction:column;gap:5px}
+.nav button{border:1px solid transparent;background:transparent;border-radius:6px;padding:10px 9px;text-align:left;
+font-size:11px;color:#a9bfcb;cursor:pointer;display:flex;align-items:center;gap:10px}
+.nav button:hover,.nav button.active{border-color:#16435c;background:linear-gradient(90deg,rgba(16,81,110,.28),transparent);color:#eafaff}
+.nav button.active{box-shadow:inset 2px 0 var(--cyan)}
+.icon{width:18px;text-align:center;color:var(--cyan);font-size:14px}
+.voice-card{position:absolute;bottom:60px;left:10px;width:160px;border:1px solid var(--line);background:#061421;padding:10px;border-radius:7px}
+.voice-title{font-size:8px;color:var(--cyan);letter-spacing:1.5px}
+.wave{height:30px;display:flex;align-items:center;gap:2px;margin:7px 0}
+.wave i{width:2px;background:var(--cyan);border-radius:2px;animation:pulse .8s ease-in-out infinite alternate}
+.wave i:nth-child(2n){animation-delay:.12s}.wave i:nth-child(3n){animation-delay:.25s}
+@keyframes pulse{from{height:5px;opacity:.35}to{height:24px;opacity:1}}
+.voice-status{text-align:center;color:var(--muted);font-size:8px}
+.top{grid-column:2;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--line);
+background:rgba(3,10,17,.72);z-index:2}
+.status{border:1px solid #1b5268;border-radius:20px;padding:6px 12px;font-size:9px;letter-spacing:1px;color:var(--green);background:rgba(16,74,75,.14)}
+.clock{text-align:center;line-height:1.05}.clock small{display:block;font-size:8px;color:#90a9b6}.clock strong{font-size:18px;color:var(--cyan2);letter-spacing:1px}
+.top-actions{display:flex;gap:6px;align-items:center}.top-actions button{background:#071522;border:1px solid var(--line);border-radius:5px;padding:7px 9px;font-size:11px;cursor:pointer}
+.operator{border:1px solid var(--line);padding:6px 9px;border-radius:6px;font-size:9px}.operator span{color:var(--muted);font-size:7px;display:block}
+.content{grid-column:2;min-width:0;min-height:0;padding:8px;overflow:auto;z-index:2}
+.dashboard{display:grid;grid-template-columns:172px minmax(300px,1fr) 245px;grid-template-rows:230px 136px 145px;gap:8px;min-height:100%}
+.card{border:1px solid var(--line);background:linear-gradient(145deg,rgba(8,26,41,.93),rgba(3,14,24,.92));
+box-shadow:var(--shadow);border-radius:6px;position:relative;overflow:hidden}
+.card:after{content:"";position:absolute;inset:0;pointer-events:none;border:1px solid rgba(25,217,255,.03)}
+.card-title{padding:9px 10px 7px;color:#a9c6d4;font-size:8px;letter-spacing:1.4px;border-bottom:1px solid rgba(25,217,255,.12)}
+.core-card{display:flex;flex-direction:column;align-items:center;justify-content:center;
+background:radial-gradient(circle at center,rgba(14,92,125,.20),rgba(3,14,24,.94) 58%)}
+.core-card:before{content:"";position:absolute;width:290px;height:290px;border-radius:50%;border:1px solid rgba(25,217,255,.08);
+box-shadow:0 0 60px rgba(25,217,255,.07);animation:spin 22s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.core{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;position:relative;
+border:1px solid rgba(101,239,255,.7);box-shadow:0 0 25px rgba(25,217,255,.25),inset 0 0 35px rgba(25,217,255,.08)}
+.core:before,.core:after{content:"";position:absolute;border-radius:50%;border:1px dashed rgba(25,217,255,.38)}
+.core:before{inset:-15px;animation:spin 13s linear infinite}.core:after{inset:-29px;border-style:solid;opacity:.22;animation:spin 19s linear infinite reverse}
+.core-text{text-align:center;z-index:1}.core-text b{font-size:28px;letter-spacing:8px;color:#dffaff}.core-text small{display:block;color:var(--cyan);letter-spacing:4px;font-size:8px;margin-top:6px}
+.core-state{margin-top:25px;color:var(--cyan);font-size:10px;letter-spacing:2px}
+.metrics{padding:8px 10px}.metric{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.metric:last-child{border:0}.metric .mi{width:24px;height:24px;border-radius:5px;background:#0a2535;display:grid;place-items:center;color:var(--cyan)}
+.metric strong{display:block;font-size:9px}.metric small{color:var(--muted);font-size:7px}
+.feed{padding:6px 8px}.feed-row{padding:7px 5px;border-bottom:1px solid rgba(255,255,255,.06);font-size:8px;display:flex;gap:7px}.tag{font-size:7px;color:var(--green);white-space:nowrap}.warn{color:var(--yellow)}.danger{color:var(--red)}
+.agents{grid-column:1/3;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:8px}
+.agent{border:1px solid #12364d;background:#071827;border-radius:5px;padding:9px;font-size:8px}.agent b{display:block;font-size:9px;margin-bottom:5px}.agent span{color:var(--green)}
+.timeline{padding:6px 10px}.task{display:flex;justify-content:space-between;font-size:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)}.task small{color:var(--muted)}
+.commands{padding:8px}.cmd{width:100%;border:1px solid #16445c;background:#071827;border-radius:4px;padding:7px;margin-bottom:6px;text-align:left;font-size:8px;cursor:pointer}.cmd:hover{border-color:var(--cyan)}
+.monitor{display:flex;gap:13px;align-items:center;justify-content:center;padding:12px}
+.gauge{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--cyan) 0 42%,#102d3c 42% 100%);position:relative}
+.gauge:after{content:"";position:absolute;inset:7px;border-radius:50%;background:#071522}.gauge span{position:relative;z-index:1;font-size:10px}.gauge small{position:absolute;top:40px;z-index:2;font-size:6px;color:var(--muted)}
+.memory{padding:12px}.mini-chart{height:70px;display:flex;align-items:center;gap:3px}.mini-chart i{width:5px;background:rgba(25,217,255,.7);border-radius:2px;box-shadow:0 0 8px rgba(25,217,255,.25)}
+.llms{padding:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.llm{border:1px solid var(--line);border-radius:4px;padding:7px;font-size:7px;color:#8ca6b3}.llm b{display:block;color:#d7edf5;font-size:8px;margin-bottom:4px}.connected{color:var(--green)!important}
+.footer{grid-column:2;display:flex;align-items:center;gap:8px;padding:6px 12px;border-top:1px solid var(--line);background:rgba(3,11,18,.94);z-index:3}
+.footer-chip{border:1px solid var(--line);border-radius:5px;padding:5px 8px;font-size:7px;color:#9ab1bd}.talk{flex:1;max-width:420px;margin:auto;border:1px solid rgba(25,217,255,.65);border-radius:22px;padding:7px 18px;text-align:center;
+box-shadow:0 0 18px rgba(25,217,255,.13);color:var(--cyan);font-size:9px;letter-spacing:1px;cursor:pointer}.talk small{display:block;color:#7e9aa8;font-size:7px;margin-top:2px}
+.overlay{position:fixed;inset:0;background:#02070c;z-index:50;display:grid;place-items:center;transition:opacity .7s}
+.boot{width:min(440px,90vw);border:1px solid #1b536a;background:rgba(5,20,31,.94);padding:22px;border-radius:7px;box-shadow:0 0 45px rgba(25,217,255,.12)}
+.boot h1{font-size:17px;letter-spacing:4px;margin:0 0 14px;color:#e7fbff}.bootlog{height:105px;font-size:9px;color:#8bb3c2;overflow:hidden;line-height:1.8}.progress{height:2px;background:#0c2737}.bar{height:100%;width:0;background:var(--cyan);box-shadow:0 0 12px var(--cyan);transition:width .3s}.boot small{display:block;text-align:right;margin-top:8px;color:var(--muted);font-size:7px}
+.mobile-nav{display:none}
+@media(max-width:1050px){
+  .app{grid-template-columns:155px 1fr}
+  .dashboard{grid-template-columns:150px minmax(260px,1fr) 210px}
+}
+@media(max-width:760px){
+  .app{display:block;overflow:hidden}.sidebar{display:none}.top{height:54px;padding:7px 10px;border-bottom:1px solid var(--line)}
+  .status{font-size:7px;padding:5px 7px}.clock small{font-size:6px}.clock strong{font-size:14px}.top-actions button{display:none}.operator{font-size:7px;padding:5px}
+  .content{height:calc(100dvh - 104px);padding:7px 7px 12px}
+  .dashboard{display:flex;flex-direction:column;gap:7px;min-height:0}
+  .core-card{height:270px;order:1}.core{width:135px;height:135px}.core-text b{font-size:24px}.core-state{margin-top:21px}
+  .metrics-card{order:2}.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}.metric{padding:6px;border:1px solid rgba(255,255,255,.05);border-radius:4px}
+  .feed-card{order:3}.agents-card{order:4}.agents{grid-template-columns:repeat(2,1fr)}.timeline-card{order:5}.commands-card{order:6}
+  .monitor-card{order:7}.memory-card{order:8}.llm-card{order:9}
+  .monitor{justify-content:space-around}.footer{display:none}
+  .mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:50px;background:#04101a;border-top:1px solid var(--line);z-index:20;justify-content:space-around}
+  .mobile-nav button{background:none;border:0;font-size:7px;color:#7893a2;padding:5px}.mobile-nav button.active{color:var(--cyan)}.mobile-nav span{display:block;font-size:15px;margin-bottom:2px}
+}
+body.alt-wallpaper{background:radial-gradient(circle at 20% 10%,#102d45 0,#050b12 42%,#020509 100%)!important}
+
+.cti-card{grid-column:1/-1}.cti-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.cti-toolbar .cmd{min-width:auto;padding:8px 12px}.cti-toolbar span{font-size:11px;color:var(--muted)}.cti-grid,.cti-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:10px}.cti-item{border:1px solid #173342;background:rgba(4,15,24,.72);border-radius:12px;padding:11px}.cti-head{display:flex;justify-content:space-between;gap:10px}.cti-head b{font-size:12px}.cti-head span{font-size:9px;color:var(--cyan);border:1px solid #1c5368;border-radius:8px;padding:3px 6px}.cti-meta{display:grid;gap:5px;margin-top:8px;font-size:10px;color:var(--muted);word-break:break-word}.cti-foot{margin-top:8px;font-size:9px;color:#7ca0b1}.cti-empty{padding:18px;border:1px dashed #214858;border-radius:10px;color:var(--muted);font-size:11px;text-align:center}.cti-card .card-title{margin-bottom:10px}
+
+.cti-map-wrap{margin:10px 0;border:1px solid #173342;border-radius:12px;overflow:hidden;background:#02070b;aspect-ratio:1.7}.cti-map-wrap iframe{width:100%;height:100%;border:0;display:block}.cti-filterbar{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.cti-filterbar .cmd{font-size:9px;padding:7px 9px}.cti-country-summary{display:flex;gap:7px;flex-wrap:wrap;align-items:center;padding:10px;border:1px solid #173342;border-radius:10px;background:rgba(4,15,24,.72);font-size:10px;color:#8ca8b7}.cti-country-summary>b{width:100%;color:#bfefff}.cti-country-summary span{border:1px solid #1c5368;border-radius:8px;padding:5px 7px;color:#d9f8ff}.cti-country-summary em{font-style:normal;color:var(--cyan);margin-left:4px}.cti-country-summary small{color:#718b9a}
+</style>
+
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JARVIS">
+
+<style>
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:9999;display:none;align-items:center;justify-content:center;padding:18px}
+.modal-backdrop.show{display:flex}
+.modal{width:min(520px,94vw);max-height:82vh;overflow:auto;background:#061421;border:1px solid #00d9ff;border-radius:12px;box-shadow:0 0 40px rgba(0,217,255,.18);padding:18px}
+.modal h2{margin:0 0 12px;color:#eafaff;font-size:18px;letter-spacing:2px}
+.modal p{color:#8ca8b7;font-size:12px;line-height:1.6}
+.modal-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #123044;font-size:12px}
+.modal button{background:#071d2c;border:1px solid #15506b;color:#bdefff;border-radius:7px;padding:9px 12px}
+.close-modal{float:right;border:0!important;background:transparent!important;font-size:20px}
+.toast{position:fixed;left:50%;bottom:78px;transform:translateX(-50%);z-index:10000;background:#062333;border:1px solid #00d9ff;color:#dffaff;padding:10px 15px;border-radius:8px;font-size:11px;display:none}
+.toast.show{display:block}
+
+.command-box{display:flex;gap:7px;margin:10px 0}.command-box input{flex:1;min-width:0;background:#04101a;border:1px solid #17445c;border-radius:8px;color:#eafaff;padding:11px;font-size:12px;outline:none}.command-box input:focus{border-color:var(--cyan)}.command-box button{cursor:pointer}.command-help{font-size:10px!important;color:#7590a2!important;margin:8px 0}.result-box{border:1px solid #12364d;background:#04101a;border-radius:8px;padding:10px;color:#bfefff;font-size:11px;line-height:1.5;min-height:40px}.quick-links{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:10px}.quick-links button{cursor:pointer;text-align:left}
+</style>
+
+<style id="xc09-final-responsive">
+/* XC-09 final interaction + responsive layer */
+.modal-backdrop{z-index:99999!important}
+.modal{width:min(760px,94vw)!important;max-height:88dvh!important}
+.chat-log{max-height:46dvh;overflow:auto;display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.chat-msg{padding:9px 11px;border:1px solid #163d52;border-radius:10px;background:#071827;font-size:11px;line-height:1.45;white-space:pre-wrap}
+.chat-msg.user{align-self:flex-end;border-color:#1a6c82;background:#082536}
+.chat-msg.ai{align-self:flex-start;border-color:#1a485d}
+.chat-actions{display:flex;gap:7px;flex-wrap:wrap}.chat-actions button{cursor:pointer}
+.cti-map-wrap{height:min(48vh,520px)!important;min-height:280px;border:1px solid #16485e;border-radius:12px;overflow:hidden;background:#02080e}
+.cti-map-wrap iframe{width:100%;height:100%;border:0;display:block}
+.cti-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px;max-height:38vh;overflow:auto}
+.cti-item{border:1px solid #173d50;background:#061521;border-radius:10px;padding:10px}.cti-head{display:flex;justify-content:space-between;gap:8px}.cti-head b{color:#e7fbff;font-size:11px}.cti-head span{color:#ffd35a;font-size:9px}.cti-meta{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px;color:#8eabb8;font-size:9px}.cti-foot{margin-top:8px;color:#19d9ff;font-size:8px}
+@media(max-width:1050px){.app{grid-template-columns:150px 1fr}.dashboard{grid-template-columns:150px minmax(260px,1fr) 210px;grid-template-rows:220px 145px 145px}.voice-card{width:130px}.cti-list{grid-template-columns:1fr}}
+@media(max-width:760px){html,body{overflow:hidden}.app{grid-template-columns:1fr;grid-template-rows:52px 1fr 52px}.sidebar{display:none}.top{grid-column:1;padding:6px 9px}.status{font-size:7px;padding:5px 7px}.clock strong{font-size:14px}.top-actions button{padding:6px 7px}.operator{display:none}.content{grid-column:1;padding:6px}.dashboard{display:flex;flex-direction:column;gap:7px;min-height:auto}.card{min-height:120px}.core-card{min-height:300px}.metrics-card,.feed-card{min-height:190px}.cti-card{min-height:260px}.agents-card{min-height:190px}.footer{grid-column:1}.mobile-nav{display:flex!important}.modal{width:96vw!important;max-height:90dvh!important;padding:13px}.modal-row{gap:10px}.modal-row button{white-space:nowrap}.cti-map-wrap{height:38vh!important;min-height:220px}.cti-meta{grid-template-columns:1fr}.cti-list{max-height:32vh}.quick-links{grid-template-columns:1fr 1fr}.command-box{flex-wrap:wrap}.command-box input{width:100%}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-core">◉</div><div><b>XC-09</b><small>COMMAND CENTER</small></div></div>
+    <nav class="nav">
+      <button class="active"><span class="icon">⌘</span>Command Center</button>
+      <button><span class="icon">◉</span>AI Core</button>
+      <button><span class="icon">♢</span>Agents</button>
+      <button><span class="icon">☑</span>Tasks</button>
+      <button><span class="icon">□</span>Calendar</button>
+      <button><span class="icon">▤</span>Memory</button>
+      <button><span class="icon">◌</span>Conversations</button>
+      <button><span class="icon">◇</span>Knowledge Base</button>
+      <button onclick="ctiPanel()"><span class="icon">🛰</span>CTI Satellite</button><button><span class="icon">⚙</span>Tools & Skills</button>
+      <button><span class="icon">⌁</span>Workflows</button>
+    </nav>
+    <div class="voice-card">
+      <div class="voice-title">VOICE STATUS</div>
+      <div class="wave"><i style="height:5px"></i><i style="height:12px"></i><i style="height:19px"></i><i style="height:6px"></i><i style="height:13px"></i><i style="height:20px"></i><i style="height:7px"></i><i style="height:14px"></i><i style="height:21px"></i><i style="height:8px"></i><i style="height:15px"></i><i style="height:22px"></i><i style="height:9px"></i><i style="height:16px"></i><i style="height:23px"></i><i style="height:10px"></i><i style="height:17px"></i><i style="height:24px"></i><i style="height:11px"></i><i style="height:18px"></i><i style="height:5px"></i><i style="height:12px"></i></div>
+      <div class="voice-status">Listening<br><br>◉ Tap to Speak</div>
+    </div>
+  </aside>
+
+  <header class="top">
+    <div class="status">● SYSTEM STATUS &nbsp; OPTIMAL</div>
+    <div class="clock"><small id="date">LOADING...</small><strong id="time">00:00:00</strong></div>
+    <div class="top-actions"><button onclick="commandCenter('search for ')">⌕ Search</button><button onclick="showToast('Dashboard refreshed')">▦</button><button onclick="settingsPanel()">⚙</button><div class="operator">Operator ◉<span>Commander</span></div></div>
+  </header>
+
+  <main class="content">
+    <section class="dashboard">
+      <div class="card metrics-card">
+        <div class="card-title">AI CORE OVERVIEW</div>
+        <div class="metrics">
+          <div class="metric"><div class="mi">◉</div><div><strong>AI Core</strong><small>Active</small></div></div>
+          <div class="metric"><div class="mi">▤</div><div><strong>Memory</strong><small>3,380 Stored</small></div></div>
+          <div class="metric"><div class="mi">♩</div><div><strong>Voice</strong><small>Online</small></div></div>
+          <div class="metric"><div class="mi">♢</div><div><strong>Agents</strong><small>2 Running</small></div></div>
+          <div class="metric"><div class="mi">◈</div><div><strong>LLMs</strong><small>4 Connected</small></div></div>
+          <div class="metric"><div class="mi">✓</div><div><strong>System</strong><small>Optimal</small></div></div>
+        </div>
+      </div>
+
+      <div class="card core-card">
+        <div class="core">
+          <div class="core-text"><b>XC-09</b><small>AI CORE</small><small>v3.0.0</small></div>
+        </div>
+        <div class="core-state" id="coreState">SYSTEM READY</div>
+      </div>
+
+      <div class="card feed-card">
+        <div class="card-title">LIVE INTELLIGENCE FEED <span style="float:right;color:var(--green)">● LIVE</span></div>
+        <div class="feed" id="feed">
+          <div class="feed-row"><span class="tag">INFO</span><span>Design review with the product team...</span></div>
+          <div class="feed-row"><span class="tag warn">WARN</span><span>2 tasks are overdue — Polish voice...</span></div>
+          <div class="feed-row"><span class="tag">TIP</span><span>3 pull requests are awaiting review...</span></div>
+          <div class="feed-row"><span class="tag">LIVE</span><span>CPU usage at 15% — system load nominal</span></div>
+        </div>
+      </div>
+
+      <div class="card cti-card">
+        <div class="card-title">🛰️ CTI GLOBAL THREAT INTELLIGENCE <span style="float:right;color:var(--green)">● LIVE</span></div>
+        <div class="cti-toolbar"><button class="cmd" onclick="ctiPanel()">OPEN CTI</button><button class="cmd" onclick="loadCTI()">↻ REFRESH</button><span id="ctiStatus">Waiting for feed…</span></div>
+        <div class="cti-grid" id="ctiPreview"><div class="cti-empty">Open CTI to load verified threat-intelligence records.</div></div>
+      </div>
+
+      <div class="card agents-card">
+        <div class="card-title">ACTIVE AGENTS <span style="float:right">View All ›</span></div>
+        <div class="agents">
+          <div class="agent">⌘ <b>Coding Agent</b><span>● Active</span></div>
+          <div class="agent">⌕ <b>Research Agent</b><span>● Active</span></div>
+          <div class="agent">▤ <b>Memory Agent</b><span>● Standby</span></div>
+          <div class="agent">◎ <b>Browser Agent</b><span>● Standby</span></div>
+          <div class="agent">☑ <b>Task Agent</b><span>● Standby</span></div>
+          <div class="agent">✓ <b>System Agent</b><span>● Standby</span></div>
+        </div>
+      </div>
+
+      <div class="card timeline-card">
+        <div class="card-title">MISSION TIMELINE</div>
+        <div class="timeline">
+          <div class="task"><span>09:30 &nbsp; Daily Standup</span><small>Done</small></div>
+          <div class="task"><span>12:00 &nbsp; Finalize HUD panel spacing</span><small>In 42 min</small></div>
+          <div class="task"><span>02:00 &nbsp; Deep-work block: Voice pipeline</span><small>In 2h 42m</small></div>
+          <div class="task"><span>04:30 &nbsp; Design Review — Command Center</span><small>In 5h 12m</small></div>
+        </div>
+      </div>
+
+      <div class="card commands-card">
+        <div class="card-title">QUICK COMMANDS</div>
+        <div class="commands">
+          <button class="cmd" onclick="commandCenter('Start a new task')">＋ Start New Task</button>
+          <button class="cmd" onclick="executeCommand('open calendar')">▣ Open Calendar</button>
+          <button class="cmd" onclick="startVoice()">◉ Start Voice Chat</button>
+          <button class="cmd" onclick="commandCenter('Run workflow')">▷ Run Workflow</button>
+        </div>
+      </div>
+
+      <div class="card monitor-card">
+        <div class="card-title">SYSTEM MONITOR</div>
+        <div class="monitor">
+          <div class="gauge"><span>15%</span><small>CPU</small></div>
+          <div class="gauge" style="background:conic-gradient(var(--cyan) 0 54%,#102d3c 54% 100%)"><span>54%</span><small>RAM</small></div>
+          <div class="gauge" style="background:conic-gradient(var(--cyan) 0 40%,#102d3c 40% 100%)"><span>40%</span><small>DISK</small></div>
+        </div>
+      </div>
+
+      <div class="card memory-card">
+        <div class="card-title">MEMORY INSIGHTS</div>
+        <div class="memory"><div class="mini-chart" id="chart"></div><div style="font-size:8px;color:var(--muted)">Memories 3,380 &nbsp; | &nbsp; Sessions 22 &nbsp; | &nbsp; Tool Calls 14</div></div>
+      </div>
+
+      <div class="card llm-card">
+        <div class="card-title">LLM STATUS <span style="float:right;color:var(--green)">4 Connected</span></div>
+        <div class="llms">
+          <div class="llm"><b>Claude</b>Not Linked</div><div class="llm"><b>OpenAI</b>Not Linked</div><div class="llm"><b>Gemini</b>Not Linked</div>
+          <div class="llm"><b>Groq</b><span class="connected">Connected</span></div><div class="llm"><b>OpenRouter</b>Not Linked</div><div class="llm"><b>Ollama</b>Not Linked</div>
+          <div class="llm"><b>Claude Code</b><span class="connected">Connected</span></div><div class="llm"><b>Cusor</b><span class="connected">Connected</span></div><div class="llm"><b>Copilot</b><span class="connected">Connected</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-chip">⌖ Faisalabad, Pakistan</div><div class="footer-chip">☼ 28°C Overcast</div><div class="footer-chip">⌁ Network Excellent</div>
+    <div class="talk" onclick="startVoice()">◉ &nbsp; TALK TO JARVIS <small id="talkText">Tap to speak</small></div>
+    <div class="footer-chip" id="installChip" onclick="installJarvis()" style="cursor:pointer">＋ Install JARVIS</div><div class="footer-chip">▷ Executive Briefing</div>
+  </footer>
+
+  <nav class="mobile-nav">
+    <button class="active"><span>⌂</span>Home</button><button><span>▢</span>Chat</button><button onclick="startVoice()"><span>◉</span>Voice</button><button><span>⚙</span>System</button>
+  </nav>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="boot">
+    <h1>XC-09 // COMMAND CENTER</h1>
+    <div class="bootlog" id="bootlog"></div>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <small id="bootPercent">INITIALIZING 0%</small>
+  </div>
+</div>
+
+<script>
+const bootLines=[
+  "Initializing JARVIS AI Core...",
+  "Loading memory interface...",
+  "Connecting voice module...",
+  "Checking agent services...",
+  "Synchronizing command center...",
+  "All systems nominal. Welcome, Commander."
+];
+
+function boot(){
+  const log=document.getElementById('bootlog'), bar=document.getElementById('bar'), pct=document.getElementById('bootPercent');
+  let i=0;
+  const next=()=>{
+    if(i<bootLines.length){
+      const p=document.createElement('div'); p.textContent='> '+bootLines[i]; log.appendChild(p);
+      i++; const n=Math.round(i/bootLines.length*100); bar.style.width=n+'%'; pct.textContent='INITIALIZING '+n+'%';
+      setTimeout(next,260);
+    }else{
+      setTimeout(()=>{document.getElementById('overlay').style.opacity='0';setTimeout(()=>document.getElementById('overlay').remove(),700); jarvisSay('JARVIS online. Welcome back, Commander.');},500);
+    }
+  }; next();
+}
+function clock(){
+  const d=new Date();
+  document.getElementById('time').textContent=d.toLocaleTimeString('en-GB');
+  document.getElementById('date').textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}).toUpperCase();
+}
+function makeChart(){
+  const c=document.getElementById('chart'); c.innerHTML='';
+  for(let i=0;i<42;i++){const x=document.createElement('i');x.style.height=(12+Math.random()*48)+'px';c.appendChild(x)}
+}
+let voiceEnabled=true;
+let recognitionLanguage=localStorage.getItem('jarvis_language')||'en-US';
+let deferredInstallPrompt=null;
+const MEMORY_KEY='jarvis_brain_memory_v2';
+const PREF_KEY='jarvis_brain_prefs_v2';
+function loadMemory(){try{return JSON.parse(localStorage.getItem(MEMORY_KEY)||'[]')}catch(e){return[]}}
+function saveMemory(items){localStorage.setItem(MEMORY_KEY,JSON.stringify(items.slice(-100)))}
+function remember(kind,user,assistant,intent='chat'){
+  const m=loadMemory();m.push({time:new Date().toISOString(),kind,user,assistant,intent});saveMemory(m);
+}
+function memorySearch(term){
+  const q=String(term||'').toLowerCase();
+  return loadMemory().filter(x=>(x.user+' '+x.assistant).toLowerCase().includes(q)).slice(-8);
+}
+function normalizeCommand(raw){
+  return String(raw||'').toLowerCase().trim().replace(/[!?.,]+/g,' ').replace(/\s+/g,' ');
+}
+function nanoBrain(raw){
+  const original=String(raw||'').trim();
+  const q=normalizeCommand(original);
+  if(!q)return {intent:'empty'};
+  const hasAny=(arr)=>arr.some(x=>q.includes(x));
+  const hasVerb=/(^|\s)(open|launch|start|run|go to|show|kholo|khol|chalao|chala|jao|jaye|jana)(\s|$)/.test(q);
+  if(hasAny(['hi','hello','salam','assalam alaikum','assalam','hey'])) return {intent:'greeting'};
+  if(/\b(what time|current time|time is it|time)\b/.test(q)||q.includes('kitne baj')) return {intent:'time'};
+  if(/\b(today|date|what day|day is it)\b/.test(q)||q.includes('aaj ki date')||q.includes('aaj kya date')) return {intent:'date'};
+  const targets={
+    youtube:['youtube','you tube','yt'], whatsapp:['whatsapp','whats app'], instagram:['instagram','insta'],
+    facebook:['facebook','fb'], chrome:['chrome'], google:['google','browser'], calendar:['calendar'],
+    gmail:['gmail','mail','email'], maps:['google maps','maps','map']
+  };
+  if(hasVerb){
+    for(const [target,words] of Object.entries(targets)) if(hasAny(words)) return target==='maps'?{intent:'maps'}:{intent:'open',target};
+    if(hasAny(['game','games'])) return {intent:'games'};
+    if(hasAny(['setting','settings'])) return {intent:'settings'};
+    if(hasAny(['history','memory'])) return {intent:'history'};
+  }
+  if(/\b(change|set|switch|badal|badlo)\b/.test(q)&&hasAny(['wallpaper','background','theme'])) return {intent:'wallpaper'};
+  if(/\b(search|find|google|dhoondo|talash|search karo)\b/.test(q)){
+    const cleaned=q.replace(/\b(search|find|google|dhoondo|talash|search karo)\b/,'').replace(/^\s*(for|about|ke liye|karo)\s*/,'').trim();
+    if(cleaned) return {intent:'search',query:cleaned};
+  }
+  if(/\b(calculator|calculate|calculate karo|hisab|hisab karo)\b/.test(q)) return {intent:'calculator'};
+  if(/\b(settings|system settings|setting)\b/.test(q)) return {intent:'settings'};
+  if(/\b(clear history|delete history|forget history|history clear)\b/.test(q)) return {intent:'clear_history'};
+  if(/\b(history|memory|meri history|meri yaad|yaad rakha)\b/.test(q)) return {intent:'history'};
+  if(/\b(stop|quiet|mute|chup)\b/.test(q)) return {intent:'mute'};
+  if(/\b(help|commands|what can you do)\b/.test(q)) return {intent:'help'};
+  return {intent:'unknown',text:original};
+}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;const chip=document.getElementById('installChip');if(chip)chip.style.display='block';});
+window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;const chip=document.getElementById('installChip');if(chip)chip.style.display='none';showToast('JARVIS installed on this device');});
+function installJarvis(){if(!deferredInstallPrompt){showToast('In Chrome: menu ⋮ → Add to Home screen / Install app');return;}deferredInstallPrompt.prompt();deferredInstallPrompt.userChoice.finally(()=>{deferredInstallPrompt=null;});}
+function jarvisSay(text,save=false){
+  const state=document.getElementById('coreState');state.textContent=String(text).toUpperCase().slice(0,90);addFeed('JARVIS',text);
+  if(save)remember('assistant','',text,'reply');
+  if(voiceEnabled&&'speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.rate=.92;u.pitch=.78;speechSynthesis.speak(u);}
+  setTimeout(()=>state.textContent='SYSTEM READY',4500);
+}
+function addFeed(tag,text){const feed=document.getElementById('feed');if(!feed)return;const row=document.createElement('div');row.className='feed-row';row.innerHTML='<span class="tag">'+String(tag).replace(/[<>]/g,'')+'</span><span></span>';row.lastChild.textContent=text;feed.prepend(row);while(feed.children.length>6)feed.removeChild(feed.lastChild);}
+function openExternal(url,label){const w=window.open(url,'_blank','noopener,noreferrer');if(!w)window.location.href=url;return 'Opening '+label+'.';}
+async function executeCommand(raw){
+  const original=String(raw||'').trim();
+  if(!original){jarvisSay('Please give me a command.');return;}
+  const a=nanoBrain(original);
+  addFeed('CMD',original); remember('user',original,'',a.intent);
+  let reply='';
+  if(a.intent==='greeting') reply='Hello Commander. I am ready.';
+  else if(a.intent==='time') reply='The current time is '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  else if(a.intent==='date') reply='Today is '+new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  else if(a.intent==='open'){
+    const urls={youtube:['https://www.youtube.com','YouTube'],whatsapp:['https://web.whatsapp.com','WhatsApp Web'],instagram:['https://www.instagram.com','Instagram'],facebook:['https://www.facebook.com','Facebook'],chrome:['https://www.google.com','Chrome/browser'],google:['https://www.google.com','Google'],calendar:['https://calendar.google.com','Google Calendar'],gmail:['https://mail.google.com','Gmail']};
+    if(urls[a.target]) reply=openExternal(...urls[a.target]);
+  } else if(a.intent==='games') reply=openExternal('https://play.google.com/store/games','Google Play Games');
+  else if(a.intent==='wallpaper'){document.body.classList.toggle('alt-wallpaper');localStorage.setItem('jarvis_wallpaper',document.body.classList.contains('alt-wallpaper')?'alt':'default');reply='JARVIS wallpaper changed.';}
+  else if(a.intent==='maps') reply=openExternal('https://maps.google.com','Google Maps');
+  else if(a.intent==='search') reply=openExternal('https://www.google.com/search?q='+encodeURIComponent(a.query),'Google search');
+  else if(a.intent==='calculator') reply=openExternal('https://www.google.com/search?q=calculator','Calculator');
+  else if(a.intent==='settings'){settingsPanel();return;}
+  else if(a.intent==='clear_history'){localStorage.removeItem(MEMORY_KEY);reply='Conversation memory has been cleared.';}
+  else if(a.intent==='history'){showHistory();return;}
+  else if(a.intent==='mute'){if('speechSynthesis'in window)speechSynthesis.cancel();addFeed('JARVIS','Voice output stopped.');document.getElementById('coreState').textContent='VOICE MUTED';setTimeout(()=>document.getElementById('coreState').textContent='SYSTEM READY',1800);return;}
+  else if(a.intent==='help'){commandCenter('Help');return;}
+  else reply='I could not understand that command. Try open YouTube, open WhatsApp, search for something, what time is it, or show my history.';
+  if(reply){jarvisSay(reply); remember('assistant','',reply,a.intent);}
+}
+function showHistory(){const items=loadMemory().slice(-20).reverse();const html=items.length?items.map(x=>'<div class="result-box" style="margin:6px 0"><b>'+new Date(x.time).toLocaleString()+'</b><br>'+escapeHtml(x.user||'')+(x.assistant?'<br><span>'+escapeHtml(x.assistant)+'</span>':'')+'</div>').join(''):'<p>No saved history yet.</p>';openModal('NANO BRAIN HISTORY',html+'<button onclick="executeCommand(\'clear history\')">Clear History</button>');}
+function escapeHtml(s){return String(s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function commandCenter(initial=''){openModal('JARVIS COMMAND',`<p class="command-help">Nano Brain understands English + Roman Urdu. Try <b>open Instagram</b>, <b>search for Canada jobs</b>, <b>what time is it</b>, or <b>meri history dikhao</b>.</p><div class="command-box"><input id="commandInput" value="${String(initial).replace(/"/g,'&quot;')}" placeholder="Type a command..."><button onclick="runTypedCommand()">RUN</button><button onclick="startVoice(true)">MIC</button></div><div class="quick-links"><button onclick="executeCommand('open YouTube')">▶ YouTube</button><button onclick="executeCommand('open WhatsApp')">◉ WhatsApp</button><button onclick="executeCommand('open Instagram')">◎ Instagram</button><button onclick="executeCommand('open Facebook')">f Facebook</button><button onclick="executeCommand('open Calendar')">▣ Calendar</button><button onclick="executeCommand('open Google Maps')">⌖ Maps</button></div><div class="result-box" id="commandResult">Nano Brain ready.</div>`);setTimeout(()=>{const i=document.getElementById('commandInput');if(i){i.focus();i.addEventListener('keydown',e=>{if(e.key==='Enter')runTypedCommand()})}},50);}
+function runTypedCommand(){const i=document.getElementById('commandInput');if(!i)return;const text=i.value.trim();if(!text)return;const box=document.getElementById('commandResult');if(box)box.textContent='Understanding: '+text;executeCommand(text);if(box)box.textContent='Command processed by Nano Brain.';}
+function startVoice(fromModal=false){const talk=document.getElementById('talkText');if(talk)talk.textContent='Listening...';document.getElementById('coreState').textContent='LISTENING...';if('webkitSpeechRecognition'in window||'SpeechRecognition'in window){const R=window.SpeechRecognition||window.webkitSpeechRecognition,r=new R();r.lang=recognitionLanguage;r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>{if(talk)talk.textContent='Listening...';};r.onresult=e=>{const t=e.results[0][0].transcript;if(talk)talk.textContent=t;if(fromModal){const i=document.getElementById('commandInput');if(i){i.value=t;runTypedCommand();}else executeCommand(t)}else executeCommand(t);};r.onerror=e=>{if(talk)talk.textContent='Voice error';jarvisSay('Voice input failed. Please allow microphone permission and try again.');console.warn(e);};r.onend=()=>setTimeout(()=>{if(talk)talk.textContent='Tap to speak'},900);try{r.start();}catch(e){jarvisSay('Microphone is already active.');}}else{jarvisSay('Voice recognition is not supported here. Please use Chrome on HTTPS or use the command box.');if(talk)talk.textContent='Tap to speak';}}
+if(localStorage.getItem('jarvis_wallpaper')==='alt')document.body.classList.add('alt-wallpaper');
+setInterval(clock,1000); clock(); makeChart();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js", {updateViaCache:"none"}).then(reg => {
+    reg.update().catch(()=>{});
+  }).catch(()=>{});
+}
+</script>
+<div class="modal-backdrop" id="jarvisModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="close-modal" onclick="closeModal()">×</button>
+    <h2 id="modalTitle">JARVIS</h2>
+    <div id="modalBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(window.__toast); window.__toast=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function openModal(title, body){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').innerHTML=body;
+  document.getElementById('jarvisModal').classList.add('show');
+}
+function closeModal(){document.getElementById('jarvisModal').classList.remove('show');}
+function settingsPanel(){
+  openModal('SYSTEM SETTINGS', `
+    <div class="modal-row"><span>Voice responses</span><button id="voiceToggle" onclick="voiceEnabled=!voiceEnabled;this.textContent=voiceEnabled?'ON':'OFF';showToast(voiceEnabled?'Voice enabled':'Voice muted')">${voiceEnabled?'ON':'OFF'}</button></div>
+    <div class="modal-row"><span>Voice language</span><button onclick="recognitionLanguage=recognitionLanguage==='en-US'?'ur-PK':'en-US';localStorage.setItem('jarvis_language',recognitionLanguage);this.textContent=recognitionLanguage;showToast('Language changed')">${recognitionLanguage}</button></div>
+    <div class="modal-row"><span>Nano Brain</span><button onclick="showHistory()">HISTORY</button></div>
+    <div class="modal-row"><span>Voice Match</span><button onclick="showToast('Voice Match requires the native Android security module')">READY</button></div>
+    <div class="modal-row"><span>App Lock</span><button onclick="showToast('App Lock belongs in the native Android companion')">READY</button></div>
+    <div class="modal-row"><span>Command engine</span><button onclick="showToast('Nano Brain local command engine is active')">ACTIVE</button></div>
+    <p>Memory and Nano Brain commands run locally in this lightweight V2. Native Android features such as true voice biometric matching, app locking, incoming-call controls and system-level actions require the Android companion and user-approved permissions.</p>`);
+}
+function sectionPanel(name){
+  const content={
+    'AI Core':'AI Core is online. This is the command center for JARVIS.',
+    'Agents':'Coding Agent, Research Agent, Memory Agent and System Agent are available.',
+    'Tasks':'Your task list will appear here once the backend is connected.',
+    'Calendar':'Calendar module is ready for backend integration.',
+    'Memory':'3,380 memory items are currently shown in demo mode.',
+    'Conversations':'Conversation history module is ready.',
+    'Knowledge Base':'Knowledge Base module is ready.',
+    'Tools & Skills':'Tools and skills will be connected to the JARVIS backend.',
+    'Workflows':'Workflow runner is ready for backend integration.'
+  }[name] || 'JARVIS module ready.';
+  openModal(name.toUpperCase(), '<p>'+content+'</p>');
+}
+function bindNavigation(){
+  document.querySelectorAll('.nav button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const name=btn.innerText.replace(/^[^\w]+/,'').trim();
+      if(name!=='Command Center') sectionPanel(name);
+      else showToast('Command Center active');
+    });
+  });
+  const actions=document.querySelectorAll('.top-actions button');
+  if(actions[0]) actions[0].onclick=()=>commandCenter('search for ');
+  if(actions[1]) actions[1].onclick=()=>showToast('Dashboard layout refreshed');
+  if(actions[2]) actions[2].onclick=settingsPanel;
+  const op=document.querySelector('.operator');
+  if(op) op.onclick=()=>openModal('OPERATOR','<p>Commander profile<br>Status: ACTIVE</p>');
+  document.querySelectorAll('.mobile-nav button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.mobile-nav button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const name=btn.innerText.trim().split('\n')[0];
+      if(name==='System') settingsPanel();
+      else if(name==='Voice') startVoice();
+      else if(name==='Chat') commandCenter();
+      else showToast('Home active');
+    });
+  });
+}
+window.addEventListener('load',bindNavigation);
+</script>
+
+<script>
+/* XC-09 functional layer: keeps the existing V2 visual frontend intact. */
+const XC09_API='/api';
+let xcAlwaysListen=localStorage.getItem('xc09_always_listen')!=='off';
+let xcProfile=JSON.parse(localStorage.getItem('xc09_profile')||'null');
+let xcLocked=false, xcRecognizer=null, xcSpeaking=false, xcLastActivity=Date.now();
+function xcTouch(){xcLastActivity=Date.now();}
+['click','keydown','touchstart'].forEach(e=>document.addEventListener(e,xcTouch,{passive:true}));
+function xcEscape(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function xcProfileName(){return xcProfile&&xcProfile.name?xcProfile.name:'Commander';}
+async function xcFetch(path,body){
+  try{const r=await fetch(XC09_API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});if(!r.ok)throw new Error('API '+r.status);return await r.json();}catch(e){return null;}
+}
+function xcLocalAnswer(text){
+  const q=String(text||'').toLowerCase().trim();
+  if(/^(hi|hello|hey|salam|assalam)/.test(q))return `Hello ${xcProfileName()}. I am XC-09. How can I help you?`;
+  if(q.includes('time')||q.includes('kitne baj'))return 'The current time is '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  if(q.includes('date')||q.includes('aaj ki date'))return 'Today is '+new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  if(q.includes('security')||q.includes('cyber'))return 'Security Center is ready. Open Tools & Skills to use the defensive tools.';
+  return `I heard: ${text}. I can follow local commands, open websites, search, manage your profile, and use the defensive Security Center.`;
+}
+function xcSpeak(text){
+  const name=xcProfileName();
+  const finalText=String(text||'').replace(/\bCommander\b/g,name);
+  xcSpeaking=true; if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(finalText);u.rate=.92;u.pitch=.8;u.onend=()=>{xcSpeaking=false;if(xcAlwaysListen)xcStartListening(true)};u.onerror=()=>{xcSpeaking=false;if(xcAlwaysListen)xcStartListening(true)};speechSynthesis.speak(u);}else{xcSpeaking=false;}
+  addFeed('XC-09',finalText); const st=document.getElementById('coreState');if(st)st.textContent=finalText.toUpperCase().slice(0,90);
+}
+async function xcCommand(raw){
+  xcTouch(); const text=String(raw||'').trim(); if(!text)return;
+  if(xcLocked){xcLogin();return;}
+  addFeed('CMD',text);remember('user',text,'command','command');
+  const q=text.toLowerCase();
+  if(q==='logout'||q.includes('log out')){xcLogout();return;}
+  if(q.includes('lock app')||q.includes('lock xc-09')){xcLock();return;}
+  if(q.includes('security center')||q.includes('cyber security')){securityPanel();return;}
+  if(q.startsWith('set my name ')||q.startsWith('my name is ')){const n=text.replace(/^set my name\s+/i,'').replace(/^my name is\s+/i,'').trim();if(n){xcProfile=xcProfile||{};xcProfile.name=n;localStorage.setItem('xc09_profile',JSON.stringify(xcProfile));xcSpeak('I will call you '+n);return;}}
+  const data=await xcFetch('/chat',{text});
+  if(data&&data.reply){xcSpeak(data.reply);remember('assistant','',data.reply,data.intent||'chat');
+    if(data.intent==='open'&&data.target)xcOpenTarget(data.target);
+    if(data.intent==='search'&&data.query)window.open('https://www.google.com/search?q='+encodeURIComponent(data.query),'_blank','noopener,noreferrer');
+    if(data.intent==='security_scan')securityPanel(data.target||'127.0.0.1');
+    return;
+  }
+  const local=nanoBrain(text);
+  if(local.intent==='settings'){settingsPanel();return;}
+  if(local.intent==='history'){showHistory();return;}
+  if(local.intent==='open'){xcOpenTarget(local.target);return;}
+  if(local.intent==='search'){window.open('https://www.google.com/search?q='+encodeURIComponent(local.query),'_blank','noopener,noreferrer');return;}
+  xcSpeak(xcLocalAnswer(text));
+}
+function xcOpenTarget(target){const urls={youtube:['https://www.youtube.com','YouTube'],whatsapp:['https://web.whatsapp.com','WhatsApp'],instagram:['https://www.instagram.com','Instagram'],facebook:['https://www.facebook.com','Facebook'],chrome:['https://www.google.com','Google'],google:['https://www.google.com','Google'],calendar:['https://calendar.google.com','Google Calendar'],gmail:['https://mail.google.com','Gmail'],maps:['https://maps.google.com','Google Maps']};if(urls[target])window.open(urls[target][0],'_blank','noopener,noreferrer');xcSpeak('Opening '+(urls[target]?urls[target][1]:target)+'.');}
+function xcStartListening(force=false){
+  if(xcLocked||xcSpeaking||(!xcAlwaysListen&&!force))return;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){showToast('Use Chrome on HTTPS for voice recognition');return;}
+  if(xcRecognizer)return;
+  const r=new SR();xcRecognizer=r;r.lang=recognitionLanguage||'en-US';r.interimResults=false;r.continuous=false;r.maxAlternatives=1;
+  r.onstart=()=>{const t=document.getElementById('talkText');if(t)t.textContent='Always Listening';const st=document.getElementById('coreState');if(st)st.textContent='LISTENING...';};
+  r.onresult=e=>{const t=e.results[0]?.[0]?.transcript||'';if(t)xcCommand(t);};
+  r.onerror=e=>{xcRecognizer=null;if(e.error==='not-allowed')showToast('Microphone permission is required');else if(xcAlwaysListen)setTimeout(()=>xcStartListening(),1200);};
+  r.onend=()=>{xcRecognizer=null;const t=document.getElementById('talkText');if(t)t.textContent=xcAlwaysListen?'Always Listening':'Tap to speak';if(xcAlwaysListen&&!xcSpeaking&&!xcLocked)setTimeout(()=>xcStartListening(),500);};
+  try{r.start();}catch(e){xcRecognizer=null;}
+}
+function startVoice(force=false){xcStartListening(true);}
+function xcStopListening(){if(xcRecognizer){try{xcRecognizer.abort()}catch(e){}xcRecognizer=null;}if('speechSynthesis'in window)speechSynthesis.cancel();}
+function xcLogin(){openModal('XC-09 LOGIN',`<p>Enter your saved name and PIN. The PIN is stored only on this device.</p><div class="command-box"><input id="xcName" placeholder="Your name" value="${xcEscape(xcProfile?.name||'')}"><input id="xcPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN"></div><div class="quick-links"><button onclick="xcDoLogin()">LOGIN</button><button onclick="xcGuest()">GUEST MODE</button></div><div class="result-box">App Lock protects XC-09 after inactivity.</div>`);}
+function xcDoLogin(){const n=document.getElementById('xcName')?.value.trim()||'Commander';const p=document.getElementById('xcPin')?.value||'';if(!/^\d{4,8}$/.test(p)){showToast('PIN must be 4-8 digits');return;}xcProfile={name:n,pin:p};localStorage.setItem('xc09_profile',JSON.stringify(xcProfile));xcLocked=false;closeModal();xcSpeak('Welcome '+n+'. XC-09 is ready.');setTimeout(()=>xcStartListening(),700);}
+function xcGuest(){xcProfile={name:'Commander',guest:true};localStorage.setItem('xc09_profile',JSON.stringify(xcProfile));xcLocked=false;closeModal();xcSpeak('Guest mode enabled.');setTimeout(()=>xcStartListening(),700);}
+function xcLogout(){xcStopListening();xcLocked=true;xcLogin();}
+function xcLock(){if(!xcProfile?.pin){showToast('Set a PIN in Settings first');return;}xcLocked=true;xcStopListening();openModal('XC-09 LOCKED',`<p>Enter your device PIN to continue.</p><div class="command-box"><input id="xcUnlockPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN"></div><button onclick="xcUnlock()">UNLOCK</button>`);}
+function xcUnlock(){const p=document.getElementById('xcUnlockPin')?.value||'';if(p===xcProfile?.pin){xcLocked=false;closeModal();xcSpeak('Welcome back '+xcProfileName());setTimeout(()=>xcStartListening(),500);}else showToast('Incorrect PIN');}
+function securityPanel(prefill='127.0.0.1'){
+  openModal('XC-09 SECURITY CENTER',`<p>Defensive tools only. Nmap scanning is limited to localhost/private-network targets when using the local Nano Brain.</p><div class="modal-row"><span>Local Nmap scan</span><button onclick="xcNmap()">SCAN</button></div><div class="command-box"><input id="xcTarget" value="${xcEscape(prefill)}" placeholder="127.0.0.1 or private IP"></div><div class="modal-row"><span>SHA-256 text hash</span><button onclick="xcHash()">HASH</button></div><div class="command-box"><input id="xcHashText" placeholder="Text to hash"></div><div class="result-box" id="xcSecResult">Security Center ready.</div>`);
+}
+async function xcNmap(){const target=document.getElementById('xcTarget')?.value.trim()||'127.0.0.1';const box=document.getElementById('xcSecResult');if(box)box.textContent='Scanning '+target+'...';const data=await xcFetch('/security/nmap',{target});if(box)box.textContent=data?.output||data?.error||'Local Nano Brain is not running. Start brain.py to use Nmap.';}
+async function xcHash(){const text=document.getElementById('xcHashText')?.value||'';if(!text)return;let out='';if(window.crypto?.subtle){const b=new TextEncoder().encode(text),h=await crypto.subtle.digest('SHA-256',b);out=[...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('');}else out='Browser crypto unavailable';document.getElementById('xcSecResult').textContent=out;}
+function settingsPanel(){
+  openModal('XC-09 SYSTEM SETTINGS',`<div class="modal-row"><span>Operator / Name</span><button onclick="xcLogin()">${xcEscape(xcProfileName())}</button></div><div class="modal-row"><span>Login / Logout</span><button onclick="xcLogout()">LOGOUT</button></div><div class="modal-row"><span>App Lock</span><button onclick="xcLock()">LOCK NOW</button></div><div class="modal-row"><span>Always Listening</span><button id="xcListenToggle" onclick="xcAlwaysListen=!xcAlwaysListen;localStorage.setItem('xc09_always_listen',xcAlwaysListen?'on':'off');this.textContent=xcAlwaysListen?'ON':'OFF';if(xcAlwaysListen)xcStartListening();else xcStopListening()">${xcAlwaysListen?'ON':'OFF'}</button></div><div class="modal-row"><span>Voice responses</span><button onclick="voiceEnabled=!voiceEnabled;this.textContent=voiceEnabled?'ON':'OFF';localStorage.setItem('jarvis_voice',voiceEnabled?'on':'off')">${voiceEnabled?'ON':'OFF'}</button></div><div class="modal-row"><span>Voice language</span><button onclick="recognitionLanguage=recognitionLanguage==='en-US'?'ur-PK':'en-US';localStorage.setItem('jarvis_language',recognitionLanguage);this.textContent=recognitionLanguage">${recognitionLanguage}</button></div><div class="modal-row"><span>Security Center</span><button onclick="securityPanel()">OPEN</button></div><div class="modal-row"><span>Update</span><button onclick="xcCheckUpdate()">CHECK</button></div><p>Security protections include a strict browser CSP, safe external-link handling, local-only profile/PIN storage, app lock, and defensive local-network scanning. A web app cannot guarantee protection from viruses or OS-level cyber attacks; keep Android/Chrome updated and use trusted apps.</p>`);
+}
+function sectionPanel(name){if(name==='Tools & Skills'){securityPanel();return;}if(name==='Memory'){showHistory();return;}if(name==='Conversations'){showHistory();return;}if(name==='AI Core'){openModal('AI CORE','<p>XC-09 local command engine is online. Optional Ollama chat can run on localhost.</p>');return;}openModal(name.toUpperCase(),'<p>'+xcEscape(name)+' module is ready. Use the Command Center or voice interface to operate it.</p>');}
+async function xcCheckUpdate(){showToast('Checking for XC-09 updates...');try{const r=await fetch('./manifest.json?ts='+Date.now(),{cache:'no-store'});if(r.ok)showToast('XC-09 update check complete. Reload if an update is available.');}catch(e){showToast('Update check unavailable offline.');}}
+// Override commandCenter execution so typed chat uses the same engine.
+function runTypedCommand(){const i=document.getElementById('commandInput');if(!i)return;const text=i.value.trim();if(!text)return;const box=document.getElementById('commandResult');if(box)box.textContent='Processing...';xcCommand(text).then(()=>{if(box)box.textContent='Command processed by XC-09.';});}
+async function loadCTI(){
+  const box=document.getElementById('ctiPreview'),status=document.getElementById('ctiStatus');
+  if(status)status.textContent='Loading verified CTI…';
+  try{
+    const data=await xcFetch('/cti',{});
+    if(!data||!data.ok){if(status)status.textContent='CTI feed unavailable'; if(box)box.innerHTML='<div class="cti-empty">'+xcEscape(data?.error||'Configure a ThreatFox Auth-Key in CTI settings, or use the CISA fallback feed.')+'</div>';return;}
+    const items=Array.isArray(data.items)?data.items:[];
+    if(status)status.textContent=(data.source||'CTI')+' • '+items.length+' records • '+new Date().toLocaleTimeString();
+    if(box)box.innerHTML=items.slice(0,6).map(ctiCardHTML).join('')||'<div class="cti-empty">No recent records returned.</div>';
+  }catch(e){if(status)status.textContent='CTI offline';if(box)box.innerHTML='<div class="cti-empty">Start brain.py or deploy the server function to use live CTI.</div>';}
+}
+function ctiCardHTML(x){
+  const location=x.location||'Not specified';
+  const date=x.date||x.first_seen||'Not specified';
+  const name=x.name||x.malware||x.threat||'Unknown threat';
+  const ioc=x.ioc||x.cve||'—';
+  const tags=Array.isArray(x.tags)?x.tags.join(', '):'';
+  return `<div class="cti-item" data-kind="${xcEscape((x.threat_type||x.type||'').toLowerCase())}"><div class="cti-head"><b>${xcEscape(name)}</b><span>${xcEscape(String(x.severity||'INFO'))}</span></div><div class="cti-meta"><div>📅 ${xcEscape(date)}</div><div>📍 ${xcEscape(location)}</div><div>🦠 ${xcEscape(x.threat_type||'Threat Intelligence')}</div><div>🧬 ${xcEscape(x.type||x.ioc_type||'IOC')}</div><div>🎯 ${xcEscape(ioc)}</div>${tags?`<div>🏷️ ${xcEscape(tags)}</div>`:''}</div><div class="cti-foot">${xcEscape(x.source||'CTI feed')} ${x.confidence!=null?'• Confidence '+xcEscape(String(x.confidence))+'%':''}</div></div>`;
+}
+function ctiPanel(){
+  openModal('🛰️ XC-09 GLOBAL CTI',`<p>Global defensive cyber-threat intelligence: live world threat map + CTI records for malware, phishing, botnet/C2 and exploited vulnerabilities.</p><p><b>Attribution note:</b> a country shown by an IOC feed is an observed infrastructure/IOC location, not proof that the country itself launched the attack.</p><div class="cti-map-wrap"><iframe title="Kaspersky Cyberthreat Live Map" src="https://cybermap.kaspersky.com/en/widget/dynamic/dark" loading="lazy" referrerpolicy="no-referrer"></iframe></div><div class="cti-filterbar"><button class="cmd" onclick="ctiFilter('all')">ALL</button><button class="cmd" onclick="ctiFilter('malware')">🦠 MALWARE</button><button class="cmd" onclick="ctiFilter('phishing')">🎣 PHISHING</button><button class="cmd" onclick="ctiFilter('botnet')">🤖 BOTNET/C2</button><button class="cmd" onclick="ctiFilter('vuln')">🛡 VULNERABILITIES</button></div><div class="modal-row"><span>ThreatFox Auth-Key</span><button onclick="ctiKeySave()">SAVE</button></div><div class="command-box"><input id="ctiKey" type="password" placeholder="Optional ThreatFox Auth-Key"></div><div class="modal-row"><span>Feed</span><span id="ctiFeedName">Loading…</span></div><div class="result-box" id="ctiResult">Loading CTI…</div><div id="ctiCountrySummary" class="cti-country-summary"></div><div id="ctiList" class="cti-list"></div>`);
+  const saved=localStorage.getItem('xc09_cti_key')||''; const inp=document.getElementById('ctiKey'); if(inp)inp.value=saved;
+  loadCTIPanel();
+}
+function ctiFilter(kind){document.querySelectorAll('#ctiList .cti-item').forEach(el=>{const k=(el.dataset.kind||'');let show=kind==='all';if(kind==='malware')show=/malware|payload|ransom|trojan|rat|stealer|loader/i.test(k);if(kind==='phishing')show=/phish|credential|social engineering|clickfix/i.test(k);if(kind==='botnet')show=/botnet|c2|command|control/i.test(k);if(kind==='vuln')show=/vulnerab|exploit|cve/i.test(k);el.style.display=show?'block':'none';});}
+function ctiKeySave(){const v=document.getElementById('ctiKey')?.value.trim()||'';if(v)localStorage.setItem('xc09_cti_key',v);else localStorage.removeItem('xc09_cti_key');showToast(v?'CTI key saved on this device.':'CTI key removed.');loadCTIPanel();}
+async function loadCTIPanel(){
+  const key=localStorage.getItem('xc09_cti_key')||''; const result=document.getElementById('ctiResult'),list=document.getElementById('ctiList');
+  if(result)result.textContent='Fetching CTI…';
+  try{const data=await xcFetch('/cti',{auth_key:key});if(document.getElementById('ctiFeedName'))document.getElementById('ctiFeedName').textContent=data?.source||'CTI';if(!data?.ok){if(result)result.textContent=data?.error||'Feed unavailable';return;}if(result)result.textContent=`${data.items.length} verified records loaded`;if(list)list.innerHTML=data.items.map(ctiCardHTML).join('');
+    const counts={};(data.items||[]).forEach(x=>{const c=x.country_code||x.location;if(c&&c!=='Not specified'&&!/global|not supplied/i.test(c))counts[c]=(counts[c]||0)+1;});
+    const summary=document.getElementById('ctiCountrySummary');if(summary){const rows=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);summary.innerHTML='<b>🌍 Observed IOC / infrastructure countries</b>'+ (rows.length?rows.map(([c,n])=>`<span>${xcEscape(c)} <em>${n}</em></span>`).join(''):'<small>No country data supplied by the current feed.</small>');}
+  }catch(e){if(result)result.textContent='CTI unavailable. Check Nano Brain/server connection.';}
+}
+
+// Replace boot welcome and start hands-free after first profile setup.
+const __xcOriginalBoot=boot;
+boot=function(){
+  const log=document.getElementById('bootlog'),bar=document.getElementById('bar'),pct=document.getElementById('bootPercent');let i=0;
+  const next=()=>{if(i<bootLines.length){const p=document.createElement('div');p.textContent='> '+bootLines[i].replace(/JARVIS/g,'XC-09');log.appendChild(p);i++;const n=Math.round(i/bootLines.length*100);bar.style.width=n+'%';pct.textContent='INITIALIZING '+n+'%';setTimeout(next,220);}else setTimeout(()=>{document.getElementById('overlay').style.opacity='0';setTimeout(()=>{document.getElementById('overlay').remove();loadCTI();if(!xcProfile)xcLogin();else {xcSpeak('XC-09 online. Welcome '+xcProfileName());setTimeout(()=>xcStartListening(),800);}},500);},300)};next();
+};
+// Security auto-lock after 15 minutes idle when a PIN exists.
+setInterval(()=>{if(xcProfile?.pin&&!xcLocked&&Date.now()-xcLastActivity>15*60*1000)xcLock();},30000);
+window.addEventListener('load',()=>{voiceEnabled=localStorage.getItem('jarvis_voice')!=='off';});
+setInterval(clock,1000); clock(); makeChart(); boot();
+</script>
+
+
+<script id="xc09-final-repair">
+(function(){
+  const urls={youtube:['https://www.youtube.com','YouTube'],whatsapp:['https://web.whatsapp.com','WhatsApp'],instagram:['https://www.instagram.com','Instagram'],facebook:['https://www.facebook.com','Facebook'],calendar:['https://calendar.google.com','Google Calendar'],gmail:['https://mail.google.com','Gmail'],maps:['https://maps.google.com','Google Maps'],google:['https://www.google.com','Google']};
+  function safeOpen(key){const u=urls[key];if(!u)return;const w=window.open(u[0],'_blank','noopener');if(!w)window.location.href=u[0];if(typeof xcSpeak==='function')xcSpeak('Opening '+u[1]+'.');}
+  function showChat(){
+    openModal('XC-09 CHAT',`<div id="xcChatLog" class="chat-log"><div class="chat-msg ai">Hello ${typeof xcProfileName==='function'?xcEscape(xcProfileName()):'Commander'}. I am XC-09. Type a message or command.</div></div><div class="command-box"><input id="xcChatInput" placeholder="Talk to XC-09…"><button id="xcChatSend">SEND</button><button id="xcChatMic">MIC</button></div><div class="chat-actions"><button class="cmd" data-open="youtube">▶ YouTube</button><button class="cmd" data-open="whatsapp">◉ WhatsApp</button><button class="cmd" data-open="instagram">◎ Instagram</button><button class="cmd" data-open="facebook">f Facebook</button><button class="cmd" data-open="calendar">▣ Calendar</button><button class="cmd" data-open="maps">⌖ Maps</button></div>`);
+    const input=document.getElementById('xcChatInput'),send=document.getElementById('xcChatSend');
+    const add=(who,text)=>{const log=document.getElementById('xcChatLog');if(!log)return;const d=document.createElement('div');d.className='chat-msg '+(who==='You'?'user':'ai');d.textContent=text;log.appendChild(d);log.scrollTop=log.scrollHeight;};
+    async function sendMsg(){const text=input?.value.trim();if(!text)return;add('You',text);input.value='';let reply='';
+      try{const data=await xcFetch('/chat',{text});reply=data?.reply||'';}catch(e){}
+      if(!reply&&typeof xcLocalAnswer==='function')reply=xcLocalAnswer(text);
+      if(!reply)reply='I am ready. Try: open YouTube, open WhatsApp, search for something, what time is it, or open settings.';
+      add('XC-09',reply);if(typeof xcSpeak==='function')xcSpeak(reply);
+      if(typeof xcOpenTarget==='function'){const q=text.toLowerCase();for(const k of Object.keys(urls))if(q.includes(k)|| (k==='youtube'&&q.includes('you tube'))){xcOpenTarget(k);break;}}
+    }
+    send.onclick=sendMsg;input.onkeydown=e=>{if(e.key==='Enter')sendMsg()};document.getElementById('xcChatMic').onclick=()=>typeof xcStartListening==='function'&&xcStartListening(true);
+    document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>safeOpen(b.dataset.open));setTimeout(()=>input?.focus(),80);
+  }
+  function showSettings(){
+    const name=typeof xcProfileName==='function'?xcProfileName():'Commander';
+    openModal('XC-09 SETTINGS',`<div class="modal-row"><span>Operator name</span><button id="xcNameBtn">${typeof xcEscape==='function'?xcEscape(name):name}</button></div><div class="modal-row"><span>Login / Logout</span><button id="xcLoginBtn">LOGIN</button><button id="xcLogoutBtn">LOGOUT</button></div><div class="modal-row"><span>Always Listening</span><button id="xcAL">${typeof xcAlwaysListen!=='undefined'&&xcAlwaysListen?'ON':'OFF'}</button></div><div class="modal-row"><span>Voice responses</span><button id="xcVR">${typeof voiceEnabled!=='undefined'&&voiceEnabled?'ON':'OFF'}</button></div><div class="modal-row"><span>Security Center</span><button id="xcSec">OPEN</button></div><div class="modal-row"><span>Global CTI Satellite</span><button id="xcCTI">OPEN</button></div><div class="modal-row"><span>Update</span><button id="xcUpd">CHECK</button></div><p>XC-09 stores your profile locally. Browser security limits OS-level protection; use Android updates and trusted apps for device security.</p>`);
+    document.getElementById('xcNameBtn').onclick=()=>typeof xcLogin==='function'&&xcLogin();
+    document.getElementById('xcLoginBtn').onclick=()=>typeof xcLogin==='function'&&xcLogin();
+    document.getElementById('xcLogoutBtn').onclick=()=>typeof xcLogout==='function'&&xcLogout();
+    document.getElementById('xcAL').onclick=()=>{xcAlwaysListen=!xcAlwaysListen;localStorage.setItem('xc09_always_listen',xcAlwaysListen?'on':'off');document.getElementById('xcAL').textContent=xcAlwaysListen?'ON':'OFF';if(xcAlwaysListen)xcStartListening();else xcStopListening();};
+    document.getElementById('xcVR').onclick=()=>{voiceEnabled=!voiceEnabled;localStorage.setItem('jarvis_voice',voiceEnabled?'on':'off');document.getElementById('xcVR').textContent=voiceEnabled?'ON':'OFF';};
+    document.getElementById('xcSec').onclick=()=>typeof securityPanel==='function'&&securityPanel();
+    document.getElementById('xcCTI').onclick=()=>typeof ctiPanel==='function'&&ctiPanel();
+    document.getElementById('xcUpd').onclick=()=>typeof xcCheckUpdate==='function'&&xcCheckUpdate();
+  }
+  window.settingsPanel=showSettings;window.commandCenter=showChat;
+  window.addEventListener('load',()=>{
+    document.querySelectorAll('.top-actions button').forEach((b,i)=>{b.onclick=i===0?()=>showChat():i===1?()=>showToast('Dashboard refreshed'):showSettings;});
+    document.querySelectorAll('.nav button').forEach(btn=>{
+      const txt=btn.textContent.trim(); if(txt.includes('CTI Satellite'))btn.onclick=()=>ctiPanel(); else if(txt.includes('Tools & Skills'))btn.onclick=()=>securityPanel(); else if(txt.includes('Memory'))btn.onclick=()=>showHistory(); else if(txt.includes('Conversations'))btn.onclick=showChat; else if(!txt.includes('Command Center'))btn.onclick=()=>sectionPanel(txt.replace(/[^A-Za-z &]/g,'').trim()); else btn.onclick=()=>showToast('Command Center active');
+    });
+    document.querySelectorAll('.mobile-nav button').forEach(btn=>{const t=btn.textContent.trim();btn.onclick=t.includes('System')?showSettings:t.includes('Chat')?showChat:t.includes('Voice')?()=>xcStartListening(true):()=>showToast('Home active');});
+    document.querySelectorAll('.quick-links [data-open]').forEach(b=>b.onclick=()=>safeOpen(b.dataset.open));
+  });
+})();
+</script>
+</body>
+</html>
+<script id="xc09-video-command-bridge">
+(function(){
+  const native=window.XC09Native;
+  const apps=['whatsapp','facebook','instagram','tiktok','snapchat','youtube'];
+  function nativeOpen(app){if(native&&native.openApp){native.openApp(app);return true;}return false;}
+  const old=window.xcCommand;
+  window.xcCommand=async function(raw){
+    const q=String(raw||'').toLowerCase().trim();
+    if(/^(hey |ok )?xc-09[ ,]*(open|launch|start)?\s*(whatsapp|facebook|instagram|tiktok|snapchat|youtube)/i.test(q)){
+      const app=apps.find(a=>q.includes(a)); if(app){nativeOpen(app); if(window.xcSpeak)xcSpeak('Opening '+app+'.'); return;}
+    }
+    if(/\b(open|launch|start)\b.*\b(play store|google play)\b/i.test(q)){if(native&&native.openPlayStore){native.openPlayStore();xcSpeak('Opening Play Store.');return;}}
+    if(/\b(open|launch)\b.*\b(gallery|photos)\b/i.test(q)){if(native&&native.openGallery){native.openGallery();xcSpeak('Opening Gallery.');return;}}
+    if(/\b(open|launch)\b.*\b(files|file manager|downloads)\b/i.test(q)){if(native&&native.openFiles){native.openFiles();xcSpeak('Opening Files.');return;}}
+    if(/\b(open|launch)\b.*\bcamera\b/i.test(q)){if(native&&native.openCamera){native.openCamera();xcSpeak('Opening Camera.');return;}}
+    if(/\b(open|launch|call)\b.*\b(phone|dialer)\b/i.test(q)){if(native&&native.openPhone){native.openPhone('');xcSpeak('Opening Phone.');return;}}
+    if(/\b(open|launch)\b.*\b(messages|sms)\b/i.test(q)){if(native&&native.openMessages){native.openMessages('');xcSpeak('Opening Messages.');return;}}
+    if(/\b(open|show)\b.*\blocation settings\b/i.test(q)){if(native&&native.openLocation){native.openLocation();xcSpeak('Opening location settings.');return;}}
+    if(/\b(app|xc-09) settings\b/i.test(q)){if(native&&native.appSettings){native.appSettings();xcSpeak('Opening XC-09 app settings.');return;}}
+    return old(raw);
+  };
+  window.xcNativeResult=function(msg){if(window.showToast)showToast(msg);};
+})();
+</script>
